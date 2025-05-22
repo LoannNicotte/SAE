@@ -59,7 +59,7 @@ public class GridHandler implements Handler<RoutingContext> {
                     }
                 }
             }
-            event.end(Double.toString(totalEnergyConsumption));
+            event.json(Double.toString(totalEnergyConsumption));
         }
 
         else if ("/grid/:id/production".equals(route_called) && "GET".equals(meth))
@@ -96,7 +96,7 @@ public class GridHandler implements Handler<RoutingContext> {
                     }
                 }
             }
-            event.end(Double.toString(totalEnergyProduced));
+            event.json(Double.toString(totalEnergyProduced));
             
 
         }else if ("/grid/:id".equals(route_called))

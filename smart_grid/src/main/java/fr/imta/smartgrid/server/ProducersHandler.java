@@ -20,7 +20,6 @@ public class ProducersHandler implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext event) {
-
         List<Integer> sensorIds = db
                     .createNativeQuery(
                         "SELECT id " +

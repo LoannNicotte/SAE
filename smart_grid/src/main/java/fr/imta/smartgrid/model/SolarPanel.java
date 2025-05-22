@@ -22,7 +22,7 @@ public class SolarPanel extends Producer {
     public JsonObject toJSON() {
         JsonObject solarP = super.toJSON();
 
-        solarP.put("Efficiency", getEfficiency());
+        solarP.put("efficiency", getEfficiency());
 
         return solarP;
     }
