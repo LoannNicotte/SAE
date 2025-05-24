@@ -9,6 +9,7 @@ import static org.eclipse.persistence.config.PersistenceUnitProperties.TARGET_SE
 import org.eclipse.persistence.config.TargetServer;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.datagram.DatagramSocketOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import jakarta.persistence.EntityManager;
@@ -86,6 +87,11 @@ public class VertxServer {
         MeasureHandler MeasureHandler = new MeasureHandler(this.db);
         router.get("/measurement/:id").handler(MeasureHandler);
         router.get("/measurement/:id/values").handler(MeasureHandler);
+
+        //UDP
+        vertx.createDatagramSocket(new DatagramSocketOptions())
+             .handler(new SolarHandler(db))
+             .listen(12345, "0.0.0.0");
 
         
         // start the server

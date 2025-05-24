@@ -1,6 +1,7 @@
 package fr.imta.smartgrid.server;
 
 import fr.imta.smartgrid.model.DataPoint;
+import fr.imta.smartgrid.model.Measurement;
 import fr.imta.smartgrid.model.WindTurbine;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
@@ -30,51 +31,87 @@ public class WTHandler implements Handler<RoutingContext> {
 
         JsonObject data = body.getJsonObject("data");
 
-        Double speedRaw = data.getDouble("speed");
-        Double powerRaw = data.getDouble("power");
+        Double speed = data.getDouble("speed");
+        Double power = data.getDouble("power");
 
         WindTurbine wt = db.find(WindTurbine.class, wtId);
         if (wt == null) {
             event.fail(404);
         }
-        
+        else{
 
-        try {
+            Measurement measureSpeed = (Measurement) db
+                    .createNativeQuery(
+                        "SELECT id " +
+                        " FROM measurement " +
+                        " WHERE sensor = ?" +
+                        " AND name = ?", 
+                        Measurement.class)                
+                    .setParameter(1, wtId)   
+                    .setParameter(2, "speed")    
+                    .getSingleResult();
+
+            DataPoint dataSpeed = new DataPoint();
+            dataSpeed.setValue(speed);
+            dataSpeed.setTimestamp(timestamp);
+            dataSpeed.setMeasurement(measureSpeed);
+
             db.getTransaction().begin();
-
-            // Création du DataPoint
-            DataPoint dp = new DataPoint();
-            dp.setWindTurbine(wt);
-            dp.setTimestamp(timestamp);
-            dp.setSpeed(speed);
-            dp.setPower(power);
-            db.persist(dp);
-
-            // Calculer l'énergie (W * 60s = joules)
-            double deltaEnergy = power * 60;
-            wt.setTotalEnergyProduced(wt.getTotalEnergyProduced() + deltaEnergy);
-            db.merge(wt);
-
+            db.persist(dataSpeed);
             db.getTransaction().commit();
-        } catch (Exception e) {
-            if (db.getTransaction().isActive()) {
-                db.getTransaction().rollback();
-            }
-            event.response()
-                .setStatusCode(500)
-                .putHeader("Content-Type", "application/json")
-                .end(new JsonObject()
-                        .put("error", "Erreur lors de l'enregistrement des données")
-                        .encodePrettily());
-            return;
-        }
 
-        // 7) Répondre succès
-        event.response()
-            .setStatusCode(200)
-            .putHeader("Content-Type", "application/json")
-            .end(new JsonObject()
-                    .put("status", "success")
-                    .encodePrettily());
+            Measurement measurePower = (Measurement) db
+                    .createNativeQuery(
+                        "SELECT id " +
+                        " FROM measurement " +
+                        " WHERE sensor = ?" +
+                        " AND name = ?", 
+                        Measurement.class)                
+                    .setParameter(1, wtId)   
+                    .setParameter(2, "power")    
+                    .getSingleResult();
+
+            DataPoint dataPower = new DataPoint();
+            dataPower.setValue(power);
+            dataPower.setTimestamp(timestamp);
+            dataPower.setMeasurement(measurePower);
+
+            db.getTransaction().begin();
+            db.persist(dataPower);
+            db.getTransaction().commit();
+
+            Measurement measureEnergy = (Measurement) db
+                    .createNativeQuery(
+                        "SELECT id " +
+                        " FROM measurement " +
+                        " WHERE sensor = ?" +
+                        " AND name = ?", 
+                        Measurement.class)                
+                    .setParameter(1, wtId)   
+                    .setParameter(2, "total_energy_produced")    
+                    .getSingleResult();
+
+            System.out.println("l'id de la meusure est:");
+            System.out.print(measureEnergy.getId());
+
+            Double lastEnergy = (Double) db
+                    .createNativeQuery(
+                        "SELECT MAX (value) " +
+                        " FROM datapoint " +
+                        " WHERE measurement = ?")                 
+                    .setParameter(1, measureEnergy.getId())    
+                    .getSingleResult();
+
+            DataPoint dataEnergy = new DataPoint();
+            dataEnergy.setValue(power*60 + lastEnergy);
+            dataEnergy.setTimestamp(timestamp);
+            dataEnergy.setMeasurement(measureEnergy);
+
+            db.getTransaction().begin();
+            db.persist(dataEnergy);
+            db.getTransaction().commit();
+
+            event.json(new JsonObject().put("status", "success"));
+        }
     }
 }
