@@ -54,20 +54,24 @@ NICOTTE Loann, VIRBEL Louis, RABIER Valentin
 
 Toutes les informations présentes sur le front-end ont été vérifiées via la BDD.
 
-## Tests pour les **POST / PUT** à partir du front-end
+## Tests pour les **POST / PUT / DELETE** à partir du front-end
 
 - **POST `/person/:id`**  
   - modification de tous les champs possible  
-  - met bien à jour la liste des owners des capteurs en cas de modification
+  - met bien à jour la liste des owners des sensors en cas de modification
 
 - **PUT `/person`**  
   - l’ajout s’effectue correctement  
   - avec ou sans capteurs sélectionnés  
-  - met bien à jour la liste des owners si un capteur est sélectionné
+  - met bien à jour la liste des owners des sensors si un capteur est sélectionné
+ 
+- **DELETE `/person/:id`**  
+  - Supprime bien la personne
+  - met bien à jour la liste des owners des capteurs liés
 
 - **POST `/sensor/:id`**  
   - modification de tous les champs possible  
-  - met bien à jour la liste des capteurs des owners si un owner est sélectionné
+  - met bien à jour la liste des sensors des owners si une personne est sélectionné
 
 - **POST `/ingress/windturbine`**  
   - ajoute bien un datapoint `speed`, `power` et `total_energy_produced` toutes les 60 secondes  
@@ -76,3 +80,8 @@ Toutes les informations présentes sur le front-end ont été vérifiées via la
 - **UDP 12345 (solar panel)**  
   - ajoute bien un datapoint `temperature`, `power` et `total_energy_produced` toutes les 60 secondes  
   - graphique sur le front-end en accord avec la BDD
+
+## Bogues résiduels identifiés
+
+- Dans certains payloads, certains champs sont à null  
+- Sur le front end, une erreur est renvoyée quand on modifie un capteur et que l’on ne sélectionne aucune personne  
